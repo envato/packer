@@ -8,10 +8,8 @@ import (
 	"unicode"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/mitchellh/packer/template/interpolate"
 )
 
@@ -45,7 +43,7 @@ func (c *AccessConfig) Config() (*aws.Config, error) {
 			return nil, err
 		}
 	} else {
-		sess := session.New(config)
+		handlers := defaults.Handlers()
 		creds = credentials.NewChainCredentials([]credentials.Provider{
 			&credentials.StaticProvider{Value: credentials.Value{
 				AccessKeyID:     c.AccessKey,
@@ -54,9 +52,7 @@ func (c *AccessConfig) Config() (*aws.Config, error) {
 			}},
 			&credentials.EnvProvider{},
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: ""},
-			&ec2rolecreds.EC2RoleProvider{
-				Client: ec2metadata.New(sess),
-			},
+			defaults.RemoteCredProvider(*config, handlers),
 		})
 	}
 	return config.WithCredentials(creds), nil
