@@ -44,7 +44,7 @@ func (c *AccessConfig) Config() (*aws.Config, error) {
 		}
 	} else {
 		handlers := defaults.Handlers()
-		creds = credentials.NewChainCredentials([]credentials.Provider{
+		creds, err = credentials.NewChainCredentials([]credentials.Provider{
 			&credentials.StaticProvider{Value: credentials.Value{
 				AccessKeyID:     c.AccessKey,
 				SecretAccessKey: c.SecretKey,
@@ -54,6 +54,9 @@ func (c *AccessConfig) Config() (*aws.Config, error) {
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: ""},
 			defaults.RemoteCredProvider(*config, handlers),
 		})
+		if err != nil {
+			return nil, err
+		}
 	}
 	return config.WithCredentials(creds), nil
 }
